@@ -11,6 +11,8 @@ from light import *
 background = color(60, 60, 60)
 black = color(0, 0, 0)
 white = color(255, 255, 255)
+MAX_RECURSION_DEPTH = 3
+
 class Raytracer(object):
     def __init__(self, width, height):
         self.width = width
@@ -82,9 +84,9 @@ class Raytracer(object):
         return material, intersect
     
     #Renderizar con material
-    def cast_ray(self, orig, direction):
-        impacted_material, intersect = self.scene_intersect(orig, direction)
-        if impacted_material is None:
+    def cast_ray(self, orig, direction, recursion=0):
+        material, intersect = self.scene_intersect(orig, direction)
+        if material is None or recursion >= MAX_RECURSION_DEPTH:
             return self.clearC
 
         light_dir = norm(sub(self.light.position, intersect.point))
@@ -93,6 +95,24 @@ class Raytracer(object):
         #Offset para que no choque con si mismo
         offset_normal = mul(intersect.normal, 1.1)
 
+        if material.albedo[2] > 0:
+            reverse_direction = mul(direction, -1)
+            reflected_dir = reflect(reverse_direction, impact.normal)
+            reflect_orig = sub(impact.point, offset_normal) if dot(reflected_dir, impact.normal) < 0 else sum(
+            impact.point, offset_normal)
+            reflected_color = self.cast_ray(reflect_orig, reflected_dir, recursion + 1)
+        else:
+            reflected_color = color(0, 0, 0)
+
+        if material.albedo[3] > 0:
+            refract_dir = refract(direction, impact.normal, material.refractive_index)
+            refract_orig = sub(impact.point, offset_normal) if dot(refract_dir, impact.normal) < 0 else sum(
+            impact.point, offset_normal)
+            refract_color = self.cast_ray(refract_orig, refract_dir, recursion + 1)
+        else:
+            refract_color = color(0, 0, 0)
+
+        
         if dot(light_dir, intersect.normal) < 0:
             shadow_orig = sub(intersect.point, offset_normal)
         else:
@@ -108,11 +128,13 @@ class Raytracer(object):
         intensity = self.light.intensity * max(0, dot(light_dir, intersect.normal)) * (1 - shadow_intensity)
         
         reflection = reflect(light_dir, intersect.normal)
-        specular_intensity = self.light.intensity * (max(0, -dot(reflection, direction))**impacted_material.spec)
+        specular_intensity = self.light.intensity * (max(0, -dot(reflection, direction))**material.spec)
 
-        diffuse = impacted_material.diffuse * intensity * impacted_material.albedo[0]
-        specular = color(255, 255, 255) * specular_intensity * impacted_material.albedo[1]
-        return diffuse + specular
+        diffuse = material.diffuse * intensity * material.albedo[0]
+        specular = color(255, 255, 255) * specular_intensity * material.albedo[1]
+        reflection = reflected_color * material.albedo[2]
+        refraction = refract_color * material.albedo[3]
+        return diffuse + specular + reflection + refraction
 
 
     def render(self):
@@ -129,14 +151,14 @@ class Raytracer(object):
 
 r = Raytracer(500, 500)
 
-ivory = Material(diffuse=color(100, 100, 80), albedo=(0.6, 0.4), spec=50)
-red = Material(diffuse=color(220, 0, 0), albedo=(0.8,  0.2), spec=100)
-blackm = Material(diffuse=color(0, 0, 0), albedo=(.9, 0.1), spec=10)
-whitem = Material(diffuse=color(255, 255, 255), albedo=(0.8, 0.2), spec=5)
-whitem2 = Material(diffuse=color(255, 255, 255), albedo=(0.7, 0.3), spec=10)
-whitem3 = Material(diffuse=color(255, 255, 255), albedo=(0.6, 0.4), spec=10)
-brown1 = Material(diffuse=color(239, 162, 94), albedo=(0.8, 0.2), spec=10)
-brown2 = Material(diffuse=color(162, 81, 10), albedo=(0.8, 0.2), spec=10)
+ivory = Material(diffuse=color(100, 100, 80), albedo=(0.6, 0.4, 0, 0), spec=50)
+red = Material(diffuse=color(220, 0, 0), albedo=(0.8,  0.2, 0, 0), spec=100)
+blackm = Material(diffuse=color(0, 0, 0), albedo=(.9, 0.1, 0, 0), spec=10)
+whitem = Material(diffuse=color(255, 255, 255), albedo=(0.8, 0.2, 0, 0), spec=5)
+whitem2 = Material(diffuse=color(255, 255, 255), albedo=(0.7, 0.3, 0, 0), spec=10)
+whitem3 = Material(diffuse=color(255, 255, 255), albedo=(0.6, 0.4, 0, 0), spec=10)
+brown1 = Material(diffuse=color(239, 162, 94), albedo=(0.8, 0.2, 0, 0), spec=10)
+brown2 = Material(diffuse=color(162, 81, 10), albedo=(0.8, 0.2, 0, 0), spec=10)
 
 r.light = Light(
     color = color(255, 255, 255),
