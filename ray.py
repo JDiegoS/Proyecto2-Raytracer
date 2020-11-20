@@ -3,12 +3,12 @@
 
 import random
 from math import tan, pi
-from sphere import Sphere
+from figures import *
 from lib import *
 from materials import *
 from light import *
 
-background = color(60, 60, 60)
+background = color(138, 183, 248)
 black = color(0, 0, 0)
 white = color(255, 255, 255)
 MAX_RECURSION_DEPTH = 3
@@ -97,17 +97,17 @@ class Raytracer(object):
 
         if material.albedo[2] > 0:
             reverse_direction = mul(direction, -1)
-            reflected_dir = reflect(reverse_direction, impact.normal)
-            reflect_orig = sub(impact.point, offset_normal) if dot(reflected_dir, impact.normal) < 0 else sum(
-            impact.point, offset_normal)
+            reflected_dir = reflect(reverse_direction, intersect.normal)
+            reflect_orig = sub(intersect.point, offset_normal) if dot(reflected_dir, intersect.normal) < 0 else sum(
+            intersect.point, offset_normal)
             reflected_color = self.cast_ray(reflect_orig, reflected_dir, recursion + 1)
         else:
             reflected_color = color(0, 0, 0)
 
         if material.albedo[3] > 0:
-            refract_dir = refract(direction, impact.normal, material.refractive_index)
-            refract_orig = sub(impact.point, offset_normal) if dot(refract_dir, impact.normal) < 0 else sum(
-            impact.point, offset_normal)
+            refract_dir = refract(direction, intersect.normal, material.refractive_index)
+            refract_orig = sub(intersect.point, offset_normal) if dot(refract_dir, intersect.normal) < 0 else sum(
+            intersect.point, offset_normal)
             refract_color = self.cast_ray(refract_orig, refract_dir, recursion + 1)
         else:
             refract_color = color(0, 0, 0)
@@ -149,56 +149,34 @@ class Raytracer(object):
           direction = norm(V3(i, j, -1))
           self.framebuffer[y][x] = self.cast_ray(V3(0, 0, 0), direction)
 
-r = Raytracer(500, 500)
+r = Raytracer(600, 500)
 
 ivory = Material(diffuse=color(100, 100, 80), albedo=(0.6, 0.4, 0, 0), spec=50)
 red = Material(diffuse=color(220, 0, 0), albedo=(0.8,  0.2, 0, 0), spec=100)
 blackm = Material(diffuse=color(0, 0, 0), albedo=(.9, 0.1, 0, 0), spec=10)
-whitem = Material(diffuse=color(255, 255, 255), albedo=(0.8, 0.2, 0, 0), spec=5)
-whitem2 = Material(diffuse=color(255, 255, 255), albedo=(0.7, 0.3, 0, 0), spec=10)
-whitem3 = Material(diffuse=color(255, 255, 255), albedo=(0.6, 0.4, 0, 0), spec=10)
 brown1 = Material(diffuse=color(239, 162, 94), albedo=(0.8, 0.2, 0, 0), spec=10)
 brown2 = Material(diffuse=color(162, 81, 10), albedo=(0.8, 0.2, 0, 0), spec=10)
-
+lake = Material(diffuse=color(80, 80, 120), albedo=(0, 0.5, 0.1, 0.8), spec=125, refractive_index=1.5)
+sun = Material(diffuse=color(244, 128, 55), albedo=(0.9,  0.1, 0, 0), spec=100)
+#249, 215, 28
 r.light = Light(
     color = color(255, 255, 255),
     position = V3(20, 0, 20),
     intensity = 2
 )
 r.scene = [
-    #White bear
-    #Head
-    Sphere(V3(-2.1, 1.6, -10), 1.2, whitem3),
-    Sphere(V3(-1.65, 0.9, -8), 0.5, whitem),
-    Sphere(V3(-3.3, 2.6, -11), 0.6, whitem2),
-    Sphere(V3(-1.4, 2.6, -11), 0.6, whitem2),
-    Sphere(V3(-1.2, 1.5, -8), 0.1, blackm),
-    Sphere(V3(-2.1, 1.5, -8), 0.1, blackm),
-    Sphere(V3(-1.43, 0.85, -7), 0.1, blackm),
+    #Sun
+    Sphere(V3(-15, 16, -30), 6, sun),
 
-    #Body
-    Sphere(V3(-2.2, -0.8, -11), 1.7, whitem3),
-    Sphere(V3(-3.8, -0.1, -10), 0.75, whitem2),
-    Sphere(V3(-0.4, -0.1, -10), 0.75, whitem2),
-    Sphere(V3(-3.2, -2.2, -10), 0.75, whitem2),
-    Sphere(V3(-0.8, -2.2, -10), 0.75, whitem2),
+    #House
+    Cube(V3(0, 1, -10), 2, ivory),
 
-    #Brown bear
-    #Head
-    Sphere(V3(3.1, 1.6, -10), 1.2, brown1),
-    Sphere(V3(2.65, 1, -8), 0.4, brown2),
-    Sphere(V3(2.3, 2.6, -11), 0.6, brown2),
-    Sphere(V3(4.4, 2.6, -11), 0.6, brown2),
-    Sphere(V3(3, 1.5, -8), 0.1, blackm),
-    Sphere(V3(2.2, 1.5, -8), 0.1, blackm),
-    Sphere(V3(2.35, 0.95, -7), 0.1, blackm),
-
-    #Body
-    Sphere(V3(3.2, -0.8, -11), 1.7, red),
-    Sphere(V3(1.6, -0.1, -10), 0.75, brown1),
-    Sphere(V3(4.6, -0.1, -10), 0.75, brown1),
-    Sphere(V3(1.7, -2.2, -10), 0.75, brown1),
-    Sphere(V3(4.5, -2.2, -10), 0.75, brown1),
-
+    #Mountains
+    Pyramid([V3(4, 2.5, -18), V3(6, 5, -15), V3(9, 2, -15), V3(5, 1.7, -15)], red),
+    Pyramid([V3(8, 3.5, -20), V3(10, 6, -17), V3(13, 3, -17), V3(9, 2.7, -17)], red),
+    
+    #Lake
+    Plane( V3(0, -1, 0), V3(0, -4, 0), lake),
+    
 ]
 r.display()

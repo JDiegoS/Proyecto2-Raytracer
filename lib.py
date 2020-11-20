@@ -9,25 +9,8 @@ from collections import namedtuple
 # Vertex3Type = numpy.dtype([('x', 'f4'), ('y', 'f4'), ('z', 'f4')])
 # Vertex2Type = numpy.dtype([('x', 'f4'), ('y', 'f4')])
 
-class V3(object):
-  def __init__(self, x, y, z):
-    self.x = x
-    self.y = y
-    self.z = z
-
-  def __repr__(self):
-    return "V3(%s, %s, %s)" % (self.x, self.y, self.z)
-
-class V2(object):
-  def __init__(self, x, y):
-    self.x = x
-    self.y = y
-
-  def __repr__(self):
-    return "V2(%s, %s)" % (self.x, self.y)
-
-# V2 = namedtuple('Point2', ['x', 'y'])
-# V3 = namedtuple('Point3', ['x', 'y', 'z'])
+V2 = namedtuple('Point2', ['x', 'y'])
+V3 = namedtuple('Point3', ['x', 'y', 'z'])
 
 def sum(v0, v1):
   """
@@ -92,6 +75,33 @@ def reflect(I, N):
   n = mul(N, 2 * dot(Lm, N))
   return norm(sub(Lm, n))
 
+def refract(I, N, refractive_index):
+  etai = 1
+  etat = refractive_index
+
+  cosi = -dot(I, N)
+
+  if cosi < 0:
+    cosi = -cosi
+    etai, etat = etat, etai
+    N = mul(N, -1)
+
+  eta = etai/etat
+
+  k = 1 - eta ** 2 * (1 - cosi ** 2)
+
+  if k < 0:
+    return V3(1,0,0)
+
+  cost = k**(1/2)
+
+  return norm(
+    sum(
+      mul(I, eta), # A
+      mul(N, (eta * cosi - cost))
+    )
+  )
+  
 def bbox(*vertices):
   """
     Input: n size 2 vectors

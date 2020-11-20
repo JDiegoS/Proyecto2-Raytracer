@@ -96,27 +96,70 @@ class Cube(object):
                                 t = planeInter.distance
                                 intersect = planeInter
 
-                                if abs(plane.normal[0]) > 0:
-                                    u = (planeInter.point[1] - minBounds[1]) / (maxBounds[1] - minBounds[1])
-                                    v = (planeInter.point[2] - minBounds[2]) / (maxBounds[2] - minBounds[2])
-
-                                elif abs(plane.normal[1]) > 0:
-                                    u = (planeInter.point[0] - minBounds[0]) / (maxBounds[0] - minBounds[0])
-                                    v = (planeInter.point[2] - minBounds[2]) / (maxBounds[2] - minBounds[2])
-
-                                elif abs(plane.normal[2]) > 0:
-                                    u = (planeInter.point[0] - minBounds[0]) / (maxBounds[0] - minBounds[0])
-                                    v = (planeInter.point[1] - minBounds[1]) / (maxBounds[1] - minBounds[1])
-
-                                coords = [u, v]
-
         if intersect is None:
             return None
 
         return Intersect(distance=intersect.distance,
                          point=intersect.point,
-                         texCoords=coords,
                          normal=intersect.normal)
+
+class Triangle(object):
+    def __init__(self, vertices, material):
+        self.vertices = vertices
+        self.material = material
+
+    def ray_intersect(self, origin, direction):
+        epsilon = 0.001
+        v0, v1, v2 = self.vertices
+        normal = cross(sub(v1, v0), sub(v2, v0))
+        determinant = dot(normal, direction)
+
+        if abs(determinant) < epsilon:
+            return None
+
+        distance = dot(normal, v0)
+        t = (dot(normal, origin) + distance) / determinant
+        if t < 0:
+            return None
+
+        point = sum(origin, mul(direction, t))
+        u, v, w = barycentric(v0, v1, v2, point)
+
+        if w < 0 or v < 0 or u < 0:  
+            return None
+
+        return Intersect(distance=distance, point=point, normal=norm(normal))
+
+class Pyramid(object):
+    def __init__(self, vertices, material):
+        self.sides = self.generate_sides(vertices, material)
+        self.material = material
+
+    def generate_sides(self, vertices, material):
+        if len(vertices) != 4:
+            return [None, None, None, None]
+
+        v0, v1, v2, v3 = vertices
+        sides = [
+            Triangle([v0, v3, v2], material),
+            Triangle([v0, v1, v2], material),
+            Triangle([v1, v3, v2], material),
+            Triangle([v0, v1, v3], material),
+        ]
+        return sides
+
+    def ray_intersect(self, origin, direction):
+        t = float("inf")
+        intersect = None
+
+        for triangle in self.sides:
+            local_intersect = triangle.ray_intersect(origin, direction)
+            if local_intersect is not None:
+                if local_intersect.distance < t:
+                    t = local_intersect.distance
+                    intersect = local_intersect
+
+        return intersect
 
 class Texture(object):
   def __init__(self, path):
