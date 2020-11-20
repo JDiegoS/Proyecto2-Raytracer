@@ -1,5 +1,5 @@
 #Juan Diego Solorzano 18151
-#RT2: Phong Model
+#Proyecto 2: Raytracer
 
 import random
 from math import tan, pi
@@ -151,32 +151,86 @@ class Raytracer(object):
 
 r = Raytracer(600, 500)
 
-ivory = Material(diffuse=color(100, 100, 80), albedo=(0.6, 0.4, 0, 0), spec=50)
-red = Material(diffuse=color(220, 0, 0), albedo=(0.8,  0.2, 0, 0), spec=100)
-blackm = Material(diffuse=color(0, 0, 0), albedo=(.9, 0.1, 0, 0), spec=10)
-brown1 = Material(diffuse=color(239, 162, 94), albedo=(0.8, 0.2, 0, 0), spec=10)
-brown2 = Material(diffuse=color(162, 81, 10), albedo=(0.8, 0.2, 0, 0), spec=10)
+#Materials
+housec = Material(diffuse=color(200, 200, 200), albedo=(0.6, 0.4, 0, 0), spec=50)
+door = Material(diffuse=color(80, 80, 80), albedo=(0.9, 0.1, 0, 0), spec=50)
+whitec = Material(diffuse=color(235, 235, 235), albedo=(.7, 0.3, 0, 0), spec=1)
+blackc = Material(diffuse=color(0, 0, 0), albedo=(.7, 0.3, 0, 0), spec=100)
+roof = Material(diffuse=color(85, 65, 36), albedo=(0.8, 0.2, 0, 0), spec=100)
+wood = Material(diffuse=color(106, 75, 53), albedo=(0.8, 0.2, 0, 0), spec=10)
 lake = Material(diffuse=color(80, 80, 120), albedo=(0, 0.5, 0.1, 0.8), spec=125, refractive_index=1.5)
-sun = Material(diffuse=color(244, 128, 55), albedo=(0.9,  0.1, 0, 0), spec=100)
-#249, 215, 28
+grass = Material(diffuse=color(42, 76, 0), albedo=(1, 0, 0, 0), spec=0)
+window = Material(diffuse=color(150, 180, 200), albedo=(0, 0.5, 0.2, 0.8), spec=125, refractive_index=1.5)
+lightp = Material(diffuse=color(250, 253, 15), albedo=(1, 0, 0, 0), spec=0)
+
+
 r.light = Light(
     color = color(255, 255, 255),
     position = V3(20, 0, 20),
     intensity = 2
 )
 r.scene = [
-    #Sun
-    Sphere(V3(-15, 16, -30), 6, sun),
-
+    #House by the lake
     #House
-    Cube(V3(0, 1, -10), 2, ivory),
+    Cube(V3(-3, 1.7, -10), 2.5, housec),
+    Cube(V3(-0.5, 1.7, -10), 2.5, housec),
+    Cube(V3(-1.7, 0.7, -9), 0.6, door),
+    Cube(V3(-1.7, 1.2, -9), 0.6, door),
+    Cube(V3(-3.3, 2.1, -9), 0.85, window),
+    Cube(V3(-0.2, 2.1, -9), 0.85, window),
 
-    #Mountains
-    Pyramid([V3(4, 2.5, -18), V3(6, 5, -15), V3(9, 2, -15), V3(5, 1.7, -15)], red),
-    Pyramid([V3(8, 3.5, -20), V3(10, 6, -17), V3(13, 3, -17), V3(9, 2.7, -17)], red),
+    #Light post
+    Sphere(V3(-6, 1.9, -10), 0.2, lightp),
+    Cube(V3(-6, 0.6, -10), 0.2, blackc),
+    Cube(V3(-6, 0.8, -10), 0.2, blackc),
+    Cube(V3(-6, 1, -10), 0.2, blackc),
+    Cube(V3(-6, 1.2, -10), 0.2, blackc),
+    Cube(V3(-6, 1.4, -10), 0.2, blackc),
+    Cube(V3(-6, 1.6, -10), 0.2, blackc),
+
+    #Cabin
+    Cube(V3(3.2, 1.2, -10), 1.5, wood),
+    #Cabin roof
+    Pyramid([V3(3.1, 3.4, -18), V3(5, 4.5, -15), V3(7.3, 2.8, -15), V3(3.2, 2.8, -15)], roof),
+
+    #Tree
+    Cube(V3(6, 0.5, -10), 0.4, wood),
+    Cube(V3(6, 0.9, -10), 0.4, wood),
+    Cube(V3(6, 1.3, -10), 0.4, wood),
+    Cube(V3(6, 1.7, -10), 0.4, grass),
+    Cube(V3(5.6, 1.7, -10), 0.4, grass),
+    Cube(V3(6.4, 1.7, -10), 0.4, grass),
+    Cube(V3(6, 2.1, -10), 0.4, grass),
+    Cube(V3(5.6, 2.1, -10), 0.4, grass),
+    Cube(V3(6.4, 2.1, -10), 0.4, grass),
+    Cube(V3(6, 2.3, -10), 0.4, grass),
     
+    #Grass
+    Triangle([V3(-10, 0.6, -12), V3(-10, -1.85, -12), V3(10, 0.6, -12)], grass),
+
     #Lake
-    Plane( V3(0, -1, 0), V3(0, -4, 0), lake),
+    Plane(V3(0, -1.5, -10), V3(0, 1, 0.05), lake),
+
+    #Clouds
+    Cube(V3(-3, 5, -10), 0.4, whitec),
+    Cube(V3(-3, 4.6, -10), 0.4, whitec),
+    Cube(V3(-2.6, 4.6, -10), 0.4, whitec),
+    Cube(V3(-3.2, 4.6, -10), 0.4, whitec),
+
+    Cube(V3(3.2, 4, -10), 0.4, whitec),
+    Cube(V3(3.4, 4, -10), 0.4, whitec),
+    Cube(V3(3.4, 4.4, -10), 0.4, whitec),
+    Cube(V3(3.8, 4, -10), 0.4, whitec),
+
+    Cube(V3(0, 5, -10), 0.4, whitec),
+    Cube(V3(0.4, 5, -10), 0.4, whitec),
+    Cube(V3(0.4, 5.4, -10), 0.4, whitec),
+    Cube(V3(0.6, 5, -10), 0.4, whitec),
+
+    Cube(V3(-6, 4.5, -10), 0.4, whitec),
+    Cube(V3(-6, 4.1, -10), 0.4, whitec),
+    Cube(V3(-5.8, 4.1, -10), 0.4, whitec),
+    Cube(V3(-6.4, 4.1, -10), 0.4, whitec),
     
 ]
 r.display()
